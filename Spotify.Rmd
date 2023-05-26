@@ -1,0 +1,19 @@
+---
+title: "Music Analysis"
+output: github_document
+---
+
+### Introduction
+Hi
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{README, include=FALSE}
+archivo_rmd <- "Spotify.Rmd"
+archivo_salida <- "README.md"
+render(archivo_rmd, output_file = archivo_salida)
+
+```
