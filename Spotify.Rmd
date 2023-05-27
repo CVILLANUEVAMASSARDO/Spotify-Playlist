@@ -3,17 +3,41 @@ title: "Music Analysis"
 output: github_document
 ---
 
-### Introduction
-Hi
+## Introduccion
+
+Hi hi hi
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Carga de datos
 
-```{README, include=FALSE}
-archivo_rmd <- "Spotify.Rmd"
-archivo_salida <- "README.md"
-render(archivo_rmd, output_file = archivo_salida)
+Hi hi hi
 
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+```{r, include=TRUE}
+load("C:/Users/cvill/Workspace/Spotify-Playlist/beats.RData")
+beats <- beats
+beats <- beats[!duplicated(beats$track_id),]
+beats[beats == ""] <- NA
+beats <- beats[complete.cases(beats$track_id),]
+glimpse(beats)
+```
+
+```{r, include=TRUE}
+beats_attributes <- select(beats, danceability,energy,loudness,speechiness,acousticness,instrumentalness,liveness,valence,tempo)
+glimpse(beats_attributes)
+```
+
+## Análisis exploratorio
+
+Hi hi hi
+
+```{r, include=TRUE}
+beats_estandarizada <- scale(beats_attributes, center = TRUE, scale = TRUE)
+boxplot(beats_estandarizada)
 ```
