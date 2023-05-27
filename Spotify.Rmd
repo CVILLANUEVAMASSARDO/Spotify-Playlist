@@ -131,6 +131,76 @@ cat("El dataframe contiene", nrow(beats), "filas y", ncol(beats), "columnas.")
 ### 4.1 Mapa de correlación
 
 ```{r}
-df1 <- select(beats, 3:13)
-corrplot(cor(df1))
+beats_atributos <- select(beats, 3:13)
+corrplot(cor(beats_atributos))
+```
+
+### 4.2 Histograma
+
+```{r}
+beats_grafico <- beats_atributos %>% tidyr::gather(key = "variable", value = "valor")
+
+ggplot(beats_grafico, aes(x = valor, fill = variable)) +
+  geom_histogram(binwidth=0.25) +
+  facet_wrap(~ variable, scales = "free") +
+  scale_fill_hue() +
+  guides(fill = "none") +
+  theme(legend.position = "none")
+```
+
+### 4.3 Boxplot
+
+```{r}
+ggplot(beats_grafico, aes(x = variable, y = valor)) +
+  geom_boxplot(aes(fill = variable)) +
+  facet_wrap(~ variable, scales = "free") +
+  scale_fill_hue() +
+  guides(fill = "none") +
+  theme(legend.position = "none")
+```
+
+
+
+# 5 Construcción del modelo
+
+### 5.1 Escalar los datos
+
+```{r}
+summary(beats_atributos)
+```
+
+```{r}
+beats_escalar <- scale(beats_atributos)
+summary(beats_escalar)
+```
+
+### 5.1 Método del codo (Elbow)
+
+```{r}
+wss <- function(data, maxCluster = 30) {
+  SSw <- (nrow(data) - 1) * sum(apply(data, 2, var))
+  SSw <- vector()
+  for (i in 2:maxCluster) {
+    SSw[i] <- sum(kmeans(data, centers = i)$withinss)
+  }
+  plot(1:maxCluster, SSw, type = "o", xlab = "Number of Clusters", ylab = "Within groups sum of squares", pch=19)
+}
+
+wss(beats_escalar)
+```
+
+
+### 5.2 Clusterización K-means
+
+```{r}
+wss <- function(data, maxCluster = 30) {
+  SSw <- (nrow(data) - 1) * sum(apply(data, 2, var))
+  SSw <- vector()
+  for (i in 2:maxCluster) {
+    SSw[i] <- sum(kmeans(data, centers = i)$withinss)
+  }
+  plot(1:maxCluster, SSw, type = "o", xlab = "Number of Clusters", ylab = "Within groups sum of squares", pch=19)
+}
+
+wss(beats_escalar)
 ```
