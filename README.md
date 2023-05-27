@@ -211,8 +211,40 @@ presencia de público.
 ### 4.1 Mapa de correlación
 
 ``` r
-df1 <- select(beats, 3:13)
-corrplot(cor(df1))
+beats_atributos <- select(beats, 3:13)
+corrplot(cor(beats_atributos))
 ```
 
 ![](Spotify_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+### 4.2 Histograma
+
+``` r
+beats_grafico <- beats_atributos %>% tidyr::gather(key = "variable", value = "valor")
+
+ggplot(beats_grafico, aes(x = valor, fill = variable)) +
+  geom_histogram(binwidth=0.25) +
+  facet_wrap(~ variable, scales = "free") +
+  scale_fill_hue() +
+  guides(fill = "none") +
+  theme(legend.position = "none")
+```
+
+![](Spotify_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+### 4.3 Boxplot
+
+``` r
+ggplot(beats_grafico, aes(x = variable, y = valor)) +
+  geom_boxplot(aes(fill = variable)) +
+  facet_wrap(~ variable, scales = "free") +
+  scale_fill_hue() +
+  guides(fill = "none") +
+  theme(legend.position = "none")
+```
+
+![](Spotify_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+# 5 Construcción del modelo
+
+### 5.1 K-Means
