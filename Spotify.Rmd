@@ -70,6 +70,11 @@ Se remueven las canciones duplicadas.
 beats <- beats[!duplicated(beats$track_id),]
 ```
 
+```{r}
+beats <- subset(beats, !duplicated(beats[, c(8:18)]))
+beats <- subset(beats, !duplicated(beats[, c("artist_name","track_name","album_name")]))
+```
+
 #### 3.2.2 Creando variables
 Se crea la variable que mide la duración de la canción en minutos.
 
@@ -83,7 +88,7 @@ Para el análisis que se busca, se necesitan las características de sonido de l
 Solo se conservaran estas variables y se removerá el resto.
 
 ```{r}
-beats <- beats %>% select(c(track_name,duration_min,8:18))
+beats <- beats %>% select(c(artist_name,track_name,duration_min,8:18))
 ```
 
 #### 3.2.4 Removiendo NA's
@@ -103,6 +108,8 @@ cat("El dataframe contiene", nrow(beats), "filas y", ncol(beats), "columnas.")
 
 ### 3.3 Descripción de los atributos
 Cada canción presente en la base de datos contiene los siguientes atributos:
+
+**artist_name** - Nombre del artista
 
 **track_name** - Nombre de la canción.
 
@@ -138,7 +145,7 @@ Se utiliza el coeficiente de correlación de Pearson, que mide la correlación l
 $$\rho = \frac{\text{cov}(X,Y)}{\sigma_x \sigma_y}$$
 
 ```{r}
-beats_atributos <- select(beats, 3:13)
+beats_atributos <- select(beats, 4:14)
 corrplot(cor(beats_atributos))
 ```
 
@@ -220,7 +227,7 @@ Para identificar el "codo", se busca que la adición de más clusters ya no redu
 
 ```{r, warning=FALSE}
 # Calcular SSE para diferentes valores de K
-k_values <- 1:40
+k_values <- 1:30
 sse_values <- c()
 for (k in k_values) {
   kmeans_model <- kmeans(beats_escalar, centers = k)
@@ -263,94 +270,86 @@ Se almacena el centroide del cluster como variable para los registros.
 
 ```{r}
 beats_escalar$cluster <- as.numeric(beats_escalar_kmeans$cluster)
+beats$cluster <- as.numeric(beats_escalar_kmeans$cluster)
+```
+
+Calculamos el estadístico de Hopkins
+
+```{r}
+get_clust_tendency(beats_escalar, n = 12, graph = FALSE)
+```
+
+Coeficiente de silueta
+
+```{r}
+beats_escalar_kmeans$tot.withinss
 ```
 
 ```{r}
-get_clust_tendency(beats_escalar, n = 40, graph = FALSE)
+beats_escalar_kmeans$totss
 ```
 
+```{r}
+beats_escalar_kmeans$betweenss
+```
+
+```{r}
+((beats_escalar_kmeans$betweenss)/(beats_escalar_kmeans$totss))*100
+```
+
+```{r}
+beats_escalar %>% 
+  group_by(cluster) %>% 
+  summarise_all(mean) %>% 
+  select(cluster, danceability,energy,key, loudness, mode, speechiness, acousticness, instrumentalness,liveness, valence, tempo)
+```
+
+```{r}
+beats %>% 
+  filter(track_name == "Runnin'", artist_name == "2Pac")
+```
+
+```{r}
+beats %>% 
+  filter(cluster == 3) %>% 
+  sample_n(5)
+```
+
+```{r}
+playlist_oficial <- NULL
+durationplaylist_in <- 0
+durationplaylist_fin <- 180
+
+
+while ( durationplaylist_in < durationplaylist_fin) {
+  
+  for(i in nrow(beats)) {
+    durationplaylist_in <- durationplaylist_in
+    
+
+    song <- beats[i,"track_name"]
+    durationsong <- beats[i,"duration_min"]
+    print(song)
+    print(durationsong)
+    
+    
+    
+    if(durationplaylist_in < durationplaylist_fin) {
+      
+      
+      playlist_oficial <- rbind(playlist_oficial, beats[i,])
+      durationplaylist_in <- durationplaylist_in + durationsong
+      beats <- beats[-i,]
+      
+    }  
+      
+    
+    print(durationplaylist_in)
+  }
+
+}
+```
 ### 5.3 visual
-
-```{r}
-# uso distancia euclidiana
-tempDist <- dist(escal_data_pok) %>% as.matrix()
-
-#reordeno filas y columnas en base al cluster obtenido
-index <- sort(modelo_kmeans$cluster, index.return=TRUE)
-tempDist <- tempDist[index$ix,index$ix]
-rownames(tempDist) <- c(1:nrow(escal_data_pok))
-colnames(tempDist) <- c(1:nrow(escal_data_pok))
-
-image(tempDist)
-```
-
 # 6. Evaluación del modelo
 ### 6.1 visual
-
-```{r, warning=FALSE}
-datos <- data.frame(beats_escalar)
-
-# Calcular SSE para diferentes valores de K
-k_values <- 1:30
-sse_values <- c()
-for (k in k_values) {
-  kmeans_model <- kmeans(datos, centers = k)
-  sse_values <- c(sse_values, kmeans_model$tot.withinss)
-}
-
-# Calcular la variación entre SSE actual y anterior
-sse_variation <- c(0, diff(sse_values))
-
-# Calcular la variación porcentual
-sse_percent_variation <- (sse_variation / sse_values) * 100
-
-# Crear un data frame con los valores de K, SSE, la variación y la variación porcentual
-df <- data.frame(K = k_values, SSE = sse_values, Variation = sse_variation, Percent_Variation = sse_percent_variation)
-
-# Graficar la curva SSE vs K
-ggplot(df, aes(x = K, y = SSE)) +
-  geom_line() +
-  geom_point() +
-  labs(x = "Número de clusters (K)", y = "SSE") +
-  theme_minimal() +
-  scale_x_continuous(breaks = k_values)
-
-# Imprimir los valores SSE con sus respectivos clusters, la variación y la variación porcentual
-cat("K\tSSE\t\tVariación\tVariación Porcentual\n")
-for (i in 1:length(k_values)) {
-  cat(k_values[i], "\t", sse_values[i], "\t", sse_variation[i], "\t", sse_percent_variation[i], "\n")
-}
-```
-
-### 5.4 Inspección Visual
-
-```{r}
-escal_data_pok$clus <- as.numeric(escal_data_pok$clus)
-numdata_pok$clus <- as.numeric(numdata_pok$clus)
-
-# uso distancia euclidiana
-tempDist <- dist(beats_escalar) %>% as.matrix()
-
-#reordeno filas y columnas en base al cluster obtenido
-index <- sort(beats_escalar_kmeans$cluster, index.return=TRUE)
-tempDist <- tempDist[index$ix,index$ix]
-rownames(tempDist) <- c(1:nrow(escal_data_pok))
-colnames(tempDist) <- c(1:nrow(escal_data_pok))
-
-image(tempDist)
-```
-
-```{r}
-escal_data_pok <- data.frame(beats_escalar)
-head(escal_data_pok)
-```
-
-```{r}
-beats_escalar <- scale(beats_atributos)
-summary(beats_escalar)
-```
-
-```{r}
-beats_escalar <- scale(beats_atributos)
-summary(beats_escalar)
-```
+### 6.2 visual
